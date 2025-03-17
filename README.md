@@ -129,7 +129,7 @@ LLM-Contract-Analysis-Risk-Assessment/
 （1）Contract Understanding Atticus Dataset (CUAD)  
 * 简介：由IBM和NLP研究团队发布，包含510份合同，标注了41种法律条款（如免责条款、自动续约、赔偿等）。
 * 用途：适用于合同风险识别、条款提取、法律条款分类。
-* 链接：https://huggingface.co/datasets/cuad
+* 链接：https://zenodo.org/records/4595826/files/CUAD_v1.zip?download=1
 
 （2）EDGAR合同数据集  
 * 简介：来自美国SEC的EDGAR数据库，包含大量上市公司披露的合同，如商业协议、并购协议、投资协议等。
