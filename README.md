@@ -28,9 +28,9 @@ A system for extracting key points and assessing risks in contracts using LLM.
 * Docker（可选，用于容器化部署）  
 #### 安装步骤  
 1.克隆项目仓库：  
-```git clone https://github.com/yourusername/contract_analysis_system.git```  
+```git clone https://github.com/zhangmin4215/LLM-Contract-Analysis-Risk-Assessment.git```  
 
-```cd contract_analysis_system```  
+```cd LLM-Contract-Analysis-Risk-Assessment```  
 
 2.安装依赖  
 ```pip install -r requirements.txt```  
