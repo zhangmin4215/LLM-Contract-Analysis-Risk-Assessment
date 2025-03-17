@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>智能合同分析系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>合同关键信息提取与风险评估</h1>
+        
+        <div class="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" name="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg">
+                <button type="submit">分析合同</button>
+            </form>
+        </div>
+
+        <div class="results">
+            <div class="result-card">
+                <h2>提取信息</h2>
+                <pre id="contractInfo"></pre>
+            </div>
+            
+            <div class="result-card">
+                <h2>风险评估</h2>
+                <div id="riskAssessment"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('file', document.getElementById('fileInput').files[0]);
+            
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(`错误: ${data.error}`);
+                    return;
+                }
+                
+                // 显示结果
+                document.getElementById('contractInfo').textContent = 
+                    JSON.stringify(data.contract_info, null, 2);
+                
+                const riskDiv = document.getElementById('riskAssessment');
+                riskDiv.innerHTML = `
+                    <p>风险等级: <span class="${data.risk_assessment.risk_level.toLowerCase()}">
+                        ${data.risk_assessment.risk_level}
+                    </span></p>
+                    <p>风险评分: ${data.risk_assessment.risk_score}</p>
+                `;
+                
+            } catch (error) {
+                alert(`请求失败: ${error.message}`);
+            }
+        });
+    </script>
+</body>
+</html>
