@@ -124,4 +124,19 @@ LLM-Contract-Analysis-Risk-Assessment/
 3.访问服务
 * 打开浏览器，访问 http://localhost:5000
 
+### 八.数据集
+#### 1.公开合同数据集（适用于模型预训练与微调）
+（1）Contract Understanding Atticus Dataset (CUAD)  
+* 简介：由IBM和NLP研究团队发布，包含510份合同，标注了41种法律条款（如免责条款、自动续约、赔偿等）。
+* 用途：适用于合同风险识别、条款提取、法律条款分类。
+* 链接：https://huggingface.co/datasets/cuad
 
+（2）EDGAR合同数据集  
+* 简介：来自美国SEC的EDGAR数据库，包含大量上市公司披露的合同，如商业协议、并购协议、投资协议等。
+* 用途：适用于金融、投资、并购相关合同解析。
+* 链接：https://www.sec.gov/edgar.shtml
+
+（3）LexNLP合同数据
+* 简介：LexNLP是一个法律NLP处理工具，提供了开源合同数据和法律文本解析能力。
+* 用途：适用于法律术语识别、合同结构化解析。
+* 链接：https://github.com/LexPredict/lexpredict-lexnlp
