@@ -37,7 +37,7 @@ A system for extracting key points and assessing risks in contracts using LLM.
 
 3.下载模型文件（可选）  
 如果需要使用自定义模型，请将模型文件放置在models/目录下。  
-默认使用PaddleOCR和ChatGLM-6B模型。  
+默认使用PaddleOCR和bert-base-uncased模型。  
 
 4.启动服务  
 ```export FLASK_APP=app/routes.py```  
@@ -116,10 +116,10 @@ LLM-Contract-Analysis-Risk-Assessment/
 ### 七.部署
 #### Docker部署
 1.构建Docker镜像  
-```docker build -t contract_analysis_system .```
+```docker build -t LLM-Contract-Analysis-Risk-Assessment .```
 
 2.运行容器  
-```docker run -p 5000:5000 contract_analysis_system```
+```docker run -p 5000:5000 LLM-Contract-Analysis-Risk-Assessment```
 
 3.访问服务
 * 打开浏览器，访问 http://localhost:5000
