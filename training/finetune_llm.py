@@ -1,4 +1,7 @@
 import os
+import sys
+parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+sys.path.insert(0,parentdir) 
 import torch
 from transformers import (
     AutoTokenizer,
@@ -7,9 +10,10 @@ from transformers import (
     TrainingArguments,
     DataCollatorForLanguageModeling
 )
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, DatasetDict
 from config import Config
 import logging
+import json
 
 # 配置日志
 logging.basicConfig(
@@ -26,38 +30,67 @@ def load_and_preprocess_data(data_path):
     :return: 处理后的数据集
     """
     try:
-        # 假设数据集是一个JSON文件，格式为：
-        # [{"text": "合同文本", "info": {"party_a": "甲方", "party_b": "乙方", ...}}]
-        dataset = load_dataset("json", data_files=data_path)
+        # 手动加载 JSON 文件
+        with open(data_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        # 检查数据集中是否包含 'train' 和 'validation' 键
+        if "train" not in data or "validation" not in data:
+            raise ValueError("数据集中缺少 'train' 或 'validation' 键")
+        
+        # 将数据转换为 Dataset 格式
+        train_dataset = Dataset.from_list(data["train"])
+        validation_dataset = Dataset.from_list(data["validation"])
         
         # 将数据集转换为模型输入格式
         def preprocess_function(examples):
-            # 构造提示词和输出
-            inputs = [
-                f"请从以下合同文本中提取关键信息：\n{text}\n"
-                f"提取以下字段：\n"
-                f"- 甲方名称（party_a）\n"
-                f"- 乙方名称（party_b）\n"
-                f"- 合同金额（amount）\n"
-                f"- 签约日期（sign_date）\n"
-                f"- 合同有效期（validity_period）\n"
-                f"- 重要条款（key_terms）\n"
-                for text in examples["text"]
-            ]
-            outputs = [
-                f"甲方名称：{info['party_a']}\n"
-                f"乙方名称：{info['party_b']}\n"
-                f"合同金额：{info['amount']}\n"
-                f"签约日期：{info['sign_date']}\n"
-                f"合同有效期：{info['validity_period']}\n"
-                f"重要条款：{info['key_terms']}\n"
-                for info in examples["info"]
-            ]
+            inputs = []
+            outputs = []
+            
+            # 遍历每个样本
+            for text, info in zip(examples.get("text", []), examples.get("info", [])):
+                # 检查是否包含必要的键
+                if text is not None and info is not None:
+                    # 构造提示词
+                    input_text = (
+                        f"请从以下合同文本中提取关键信息：\n{text}\n"
+                        f"提取以下字段：\n"
+                        f"- 甲方名称（party_a）\n"
+                        f"- 乙方名称（party_b）\n"
+                        f"- 合同金额（amount）\n"
+                        f"- 签约日期（sign_date）\n"
+                        f"- 合同有效期（validity_period）\n"
+                        f"- 重要条款（key_terms）\n"
+                    )
+                    inputs.append(input_text)
+                    
+                    # 构造输出
+                    output_text = (
+                        f"甲方名称：{info.get('party_a', '未知')}\n"
+                        f"乙方名称：{info.get('party_b', '未知')}\n"
+                        f"合同金额：{info.get('amount', '未知')}\n"
+                        f"签约日期：{info.get('sign_date', '未知')}\n"
+                        f"合同有效期：{info.get('validity_period', '未知')}\n"
+                        f"重要条款：{info.get('key_terms', '未知')}\n"
+                    )
+                    outputs.append(output_text)
+            
+            # 如果 inputs 和 outputs 为空，添加一个默认值
+            if not inputs:
+                inputs.append("默认输入文本")
+                outputs.append("默认输出文本")
+            
             return {"input": inputs, "output": outputs}
         
-        # 应用预处理函数
-        dataset = dataset.map(preprocess_function, batched=True)
-        return dataset
+        # 对训练集和验证集分别应用预处理函数
+        train_dataset = train_dataset.map(preprocess_function, batched=True)
+        validation_dataset = validation_dataset.map(preprocess_function, batched=True)
+        
+        # 返回处理后的数据集
+        return DatasetDict({
+            "train": train_dataset,
+            "validation": validation_dataset
+        })
     except Exception as e:
         logger.error(f"数据加载失败: {str(e)}")
         raise
@@ -73,6 +106,14 @@ def finetune_llm(model_name, dataset, output_dir):
     try:
         # 加载预训练模型和分词器
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+
+        # 如果 vocab_size 不存在，手动设置
+        if not hasattr(tokenizer, 'vocab_size'):
+            tokenizer.vocab_size = len(tokenizer.get_vocab())
+
+        # 打印 vocab_size
+        print(f"Vocabulary size: {tokenizer.vocab_size}")
+
         model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
         
         # 将输入和输出拼接为模型输入
@@ -82,6 +123,7 @@ def finetune_llm(model_name, dataset, output_dir):
         
         # 对数据集进行分词
         tokenized_dataset = dataset.map(tokenize_function, batched=True)
+        print("tokenized_dataset = ", tokenized_dataset)
         
         # 数据整理器
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
@@ -102,7 +144,8 @@ def finetune_llm(model_name, dataset, output_dir):
             weight_decay=0.01,
             warmup_steps=500,
             fp16=torch.cuda.is_available(),
-            push_to_hub=False
+            push_to_hub=False,
+            report_to="none"  # 禁用 W&B
         )
         
         # 初始化Trainer
