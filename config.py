@@ -1,4 +1,5 @@
 import os
+import torch
 
 class Config:
     # 文件上传配置
@@ -11,7 +12,8 @@ class Config:
     OCR_LANG = 'ch'  # 支持中英文混合
     
     # LLM模型配置
-    LLM_MODEL_NAME = 'THUDM/chatglm-6b'
+    # LLM_MODEL_NAME = 'THUDM/chatglm-6b'
+    LLM_MODEL_NAME = 'bert-base-uncased'
     LLM_DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     # 风险评估模型路径
