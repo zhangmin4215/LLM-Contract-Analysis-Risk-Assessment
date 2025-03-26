@@ -9,8 +9,8 @@ pdf2image==1.16.3
 Pillow==10.0.0
 
 # LLM相关
-torch==2.0.1
-transformers==4.30.2
+torch==2.6.0
+transformers==4.49.0
 sentencepiece==0.1.99  # 某些LLM模型（如ChatGLM）需要
 
 # 数据处理
